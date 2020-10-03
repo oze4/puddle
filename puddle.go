@@ -1,9 +1,6 @@
 package puddle
 
 import (
-	"container/list"
-	"fmt"
-	"net/http"
 	"sync"
 	"time"
 )
@@ -11,18 +8,6 @@ import (
 const (
 	idleTimeout = time.Second * 2
 )
-
-// List wraps `container/list`
-type List struct {
-	list.List
-}
-
-// PopFront removes then returns first element in list
-func (l *List) PopFront() func() {
-	f := l.Front()
-	l.Remove(f)
-	return f.Value.(func())
-}
 
 // New creates a new puddle (aka worker pool)
 func New(maxWorkers int) Puddle {
@@ -196,37 +181,4 @@ func worker(queue chan func()) {
 		}
 		job()
 	}
-}
-
-func main() {
-	pool := New(3)
-
-	pool.Job(func() {
-		c := &http.Client{}
-		r, e := c.Get("http://google.com")
-		if e != nil {
-			panic(e.Error())
-		}
-		fmt.Printf("To google.com %d\n", r.StatusCode)
-	})
-
-	pool.Job(func() {
-		c := &http.Client{}
-		r, e := c.Get("http://yahoo.com")
-		if e != nil {
-			panic(e.Error())
-		}
-		fmt.Printf("To yahoo.com %d\n", r.StatusCode)
-	})
-
-	pool.Job(func() {
-		c := &http.Client{}
-		r, e := c.Get("http://example.com")
-		if e != nil {
-			panic(e.Error())
-		}
-		fmt.Printf("To example.com %d\n", r.StatusCode)
-	})
-
-	pool.Seal()
 }
